@@ -82,15 +82,15 @@
                                     </td>
                                     <td class="px-5 py-4 whitespace-nowrap text-right">
                                         <div class="flex justify-end gap-2">
-                                            <a 
-                                                href="{{ route('actas.editar', $acta->id) }}" 
+                                            <button
+                                                wire:click="editarActa({{ $acta->id }})"
                                                 class="inline-flex items-center px-3 py-1.5 bg-slate-600 text-white text-xs font-medium rounded-md hover:bg-slate-700 transition-colors"
                                             >
                                                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                                                 </svg>
                                                 Editar
-                                            </a>
+                                            </button>
                                             <button 
                                                 onclick="confirmarEliminacion({{ $acta->id }}, '{{ $acta->actanro }}')"
                                                 class="inline-flex items-center px-3 py-1.5 bg-red-600 text-white text-xs font-medium rounded-md hover:bg-red-700 transition-colors"
@@ -108,7 +108,7 @@
                     </table>
                 </div>
 
-                {{-- Vista Mobile (optimizada sin espacios) --}}
+                {{-- Vista Mobile --}}
                 <div class="md:hidden divide-y divide-gray-200">
                     @foreach($actas as $acta)
                         <div class="p-4">
@@ -147,16 +147,21 @@
                                 </div>
                             </div>
 
-                            {{-- Botones separados en mobile --}}
-                           <div class="grid grid-cols-2 gap-2 pt-2 border-t border-gray-100">
-                                <a href="{{ route('actas.editar', $acta->id) }}" class="flex items-center justify-center gap-1 px-3 py-2 bg-[#6FAFBF] text-white text-sm font-medium rounded-lg hover:bg-[#5A9EAE] transition-colors">
+                            <div class="grid grid-cols-2 gap-2 pt-2 border-t border-gray-100">
+                                <button
+                                    wire:click="editarActa({{ $acta->id }})"
+                                    class="flex items-center justify-center gap-1 px-3 py-2 bg-[#6FAFBF] text-white text-sm font-medium rounded-lg hover:bg-[#5A9EAE] transition-colors"
+                                >
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                                     </svg>
                                     Editar
-                                </a>
+                                </button>
 
-                                <button onclick="confirmarEliminacion({{ $acta->id }}, '{{ $acta->actanro }}')" class="flex items-center justify-center gap-1 px-3 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors">
+                                <button
+                                    onclick="confirmarEliminacion({{ $acta->id }}, '{{ $acta->actanro }}')"
+                                    class="flex items-center justify-center gap-1 px-3 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors"
+                                >
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                                     </svg>
@@ -186,7 +191,6 @@
     {{-- SweetAlert2 CDN --}}
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-    {{-- Script de confirmación --}}
     <script>
         function confirmarEliminacion(actaId, actaNro) {
             Swal.fire({
@@ -211,7 +215,6 @@
             });
         }
 
-        // Escuchar evento de eliminación exitosa
         document.addEventListener('livewire:init', () => {
             Livewire.on('actaEliminada', () => {
                 Swal.fire({
@@ -221,6 +224,20 @@
                     confirmButtonColor: '#475569',
                     confirmButtonText: 'Aceptar',
                     timer: 2000,
+                    customClass: {
+                        popup: 'rounded-xl',
+                        confirmButton: 'rounded-lg font-semibold px-5 py-2.5'
+                    }
+                });
+            });
+
+            Livewire.on('acta-no-modificable', () => {
+                Swal.fire({
+                    title: 'Acta no disponible',
+                    text: 'Esta acta ya no puede ser modificada ni eliminada.',
+                    icon: 'warning',
+                    confirmButtonColor: '#475569',
+                    confirmButtonText: 'Aceptar',
                     customClass: {
                         popup: 'rounded-xl',
                         confirmButton: 'rounded-lg font-semibold px-5 py-2.5'

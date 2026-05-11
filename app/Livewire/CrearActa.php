@@ -238,36 +238,61 @@ class CrearActa extends Component
 
     public function guardarActa()
     {
-        $this->validate([
-            'actanro' => 'required|numeric',
-            'dto_id' => 'required',
-            'fecha' => 'required|date',
-            'hora' => 'required',
-            'lugarinfra' => 'required',
-            'foto1' => 'nullable|image|mimes:jpeg,jpg|max:2048',
-            'foto2' => 'nullable|image|mimes:jpeg,jpg|max:2048',
-            'foto3' => 'nullable|image|mimes:jpeg,jpg|max:2048',
-            'foto4' => 'nullable|image|mimes:jpeg,jpg|max:2048',
-            'foto5' => 'nullable|image|mimes:jpeg,jpg|max:2048',
-        ], [
-            'actanro.required' => 'El número de acta es obligatorio',
-            'dto_id.required' => 'El departamento es obligatorio',
-            'fecha.required' => 'La fecha es obligatoria',
-            'hora.required' => 'La hora es obligatoria',
-            'lugarinfra.required' => 'La dirección de la infracción es obligatoria',
-            'foto1.image' => 'El archivo debe ser una imagen',
-            'foto2.mimes' => 'Solo se aceptan archivos JPG/JPEG',
-            'foto2.max' => 'La imagen no debe superar los 2MB',
-            'foto3.image' => 'El archivo debe ser una imagen',
-            'foto3.mimes' => 'Solo se aceptan archivos JPG/JPEG',
-            'foto3.max' => 'La imagen no debe superar los 2MB',
-            'foto4.image' => 'El archivo debe ser una imagen',
-            'foto4.mimes' => 'Solo se aceptan archivos JPG/JPEG',
-            'foto4.max' => 'La imagen no debe superar los 2MB',
-            'foto5.image' => 'El archivo debe ser una imagen',
-            'foto5.mimes' => 'Solo se aceptan archivos JPG/JPEG',
-            'foto5.max' => 'La imagen no debe superar los 2MB',
-        ]);
+       $this->validate([
+        // Encabezado
+        'actanro'     => 'required|integer|min:1|max:9999999999',
+        'dto_id'      => 'required',
+        'fecha'       => 'required|date',
+        'hora'        => 'required',
+        'lugarinfra'  => 'required|max:100',
+
+        // Vehículo
+        'dominio'  => 'nullable|max:10|alpha_num',
+        'licencia' => 'nullable|max:20',
+        'modelo'   => 'nullable|max:50',
+        'chasis'   => 'nullable|max:50',
+        'motor'    => 'nullable|max:50',
+
+        // Infractor
+        'dni'        => 'nullable|digits_between:1,8',
+        'nombreinf'  => 'nullable|max:100',
+        'direcinf'   => 'nullable|max:100',
+        'grad_alcohol' => 'nullable|numeric|min:0|max:9.99',
+
+        // Observaciones
+        'observa'   => 'nullable|max:255',
+        'arenavese' => 'nullable|max:50',
+        'brenavese' => 'nullable|max:50',
+
+        // Fotos
+        'foto1' => 'nullable|image|mimes:jpeg,jpg|max:5120',
+        'foto2' => 'nullable|image|mimes:jpeg,jpg|max:5120',
+        'foto3' => 'nullable|image|mimes:jpeg,jpg|max:5120',
+        'foto4' => 'nullable|image|mimes:jpeg,jpg|max:5120',
+        'foto5' => 'nullable|image|mimes:jpeg,jpg|max:5120',
+    ], [
+        'actanro.required'      => 'El número de acta es obligatorio',
+        'actanro.integer'       => 'El número de acta debe ser un número entero',
+        'actanro.max'           => 'El número de acta es demasiado largo',
+        'dto_id.required'       => 'El departamento es obligatorio',
+        'fecha.required'        => 'La fecha es obligatoria',
+        'hora.required'         => 'La hora es obligatoria',
+        'lugarinfra.required'   => 'La dirección de la infracción es obligatoria',
+        'lugarinfra.max'        => 'El lugar no puede superar los 100 caracteres',
+        'dominio.max'           => 'El dominio no puede tener más de 10 caracteres',
+        'dominio.alpha_num'     => 'El dominio solo puede contener letras y números',
+        'licencia.max'          => 'La licencia no puede superar los 20 caracteres',
+        'modelo.max'            => 'El modelo no puede superar los 50 caracteres',
+        'chasis.max'            => 'El chasis no puede superar los 50 caracteres',
+        'motor.max'             => 'El motor no puede superar los 50 caracteres',
+        'dni.digits_between'    => 'El DNI debe tener entre 1 y 8 dígitos',
+        'nombreinf.max'         => 'El nombre no puede superar los 100 caracteres',
+        'direcinf.max'          => 'El domicilio no puede superar los 100 caracteres',
+        'grad_alcohol.numeric'  => 'La graduación alcohólica debe ser un número',
+        'grad_alcohol.min'      => 'La graduación alcohólica no puede ser negativa',
+        'grad_alcohol.max'      => 'La graduación alcohólica no puede superar 9.99',
+        'observa.max'           => 'Las observaciones no pueden superar los 255 caracteres',
+    ]);
 
         // Si hay errores de validación, abrir la sección de encabezado
         if ($this->getErrorBag()->has('actanro') || $this->getErrorBag()->has('dto_id') || 
@@ -279,9 +304,25 @@ class CrearActa extends Component
         }
 
         // Si hay errores en las fotos, abrir la sección de imágenes
-        if ($this->getErrorBag()->has('foto1') || $this->getErrorBag()->has('foto2') || 
-            $this->getErrorBag()->has('foto3') || $this->getErrorBag()->has('foto4') || 
-            $this->getErrorBag()->has('foto5')) {
+        if ($this->getErrorBag()->hasAny(['actanro', 'dto_id', 'fecha', 'hora', 'lugarinfra'])) {
+            $this->dispatch('abrir-seccion', seccion: 'seccion-encabezado');
+            $this->dispatch('scroll-to-top');
+            return;
+        }
+
+        if ($this->getErrorBag()->hasAny(['dominio', 'licencia', 'modelo', 'chasis', 'motor'])) {
+            $this->dispatch('abrir-seccion', seccion: 'seccion-vehiculo');
+            $this->dispatch('scroll-to-top');
+            return;
+        }
+
+        if ($this->getErrorBag()->hasAny(['dni', 'nombreinf', 'direcinf', 'grad_alcohol', 'observa'])) {
+            $this->dispatch('abrir-seccion', seccion: 'seccion-infractor');
+            $this->dispatch('scroll-to-top');
+            return;
+        }
+
+        if ($this->getErrorBag()->hasAny(['foto1', 'foto2', 'foto3', 'foto4', 'foto5'])) {
             $this->dispatch('abrir-seccion', seccion: 'seccion-imagenes');
             $this->dispatch('scroll-to-top');
             return;

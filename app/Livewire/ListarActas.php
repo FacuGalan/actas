@@ -12,15 +12,37 @@ class ListarActas extends Component
 
     protected $listeners = ['confirmarEliminacion'];
 
-    public function confirmarEliminacion($actaId)
+  public function confirmarEliminacion($actaId)
     {
         $acta = Acta::find($actaId);
         
-        if ($acta && $acta->inspector_id == auth('inspector')->id()) {
-            $acta->delete();
-            session()->flash('message', 'Acta eliminada exitosamente.');
-            $this->dispatch('actaEliminada');
+        if (!$acta || $acta->inspector_id != auth('inspector')->id()) {
+            return;
         }
+
+        if ($acta->estado >= 3) {
+            $this->dispatch('acta-no-modificable');
+            return;
+        }
+
+        $acta->delete();
+        $this->dispatch('actaEliminada');
+    }
+
+    public function editarActa($actaId)
+    {
+        $acta = Acta::find($actaId);
+
+        if (!$acta || $acta->inspector_id != auth('inspector')->id()) {
+            return;
+        }
+
+        if ($acta->estado >= 3) {
+            $this->dispatch('acta-no-modificable');
+            return;
+        }
+
+        return redirect()->route('actas.editar', $actaId);
     }
 
     public function render()
