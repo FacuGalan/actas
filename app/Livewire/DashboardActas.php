@@ -24,27 +24,36 @@ class DashboardActas extends Component
     public function mount()
     {
         $inspectorId = auth('inspector')->id();
-        
-        // Buscar operativo EN CURSO
-        $operativoEnCurso = Operativo::enCurso()->first();
-        
-        if ($operativoEnCurso) {
-            // Si el inspector está asignado O es el referente, puede verlo
-            if ($operativoEnCurso->tieneInspector($inspectorId) || $operativoEnCurso->esInspectorReferente($inspectorId)) {
-                $this->operativoEnCurso = $operativoEnCurso;
-                
-                // Marcar si es referente para mostrar botón de finalizar
-                if ($operativoEnCurso->esInspectorReferente($inspectorId)) {
-                    $this->esReferente = true;
-                }
+
+        // Buscar operativo EN CURSO donde el inspector es referente
+        $operativoEnCurso = Operativo::enCurso()
+            ->where('inspector_referente_id', $inspectorId)
+            ->first();
+
+        // Si no es referente, buscar si está asignado a algún operativo en curso
+        if (!$operativoEnCurso) {
+            $operativoIds = DB::connection('munimer_mapacalor')
+                ->table('operativo_inspector')
+                ->where('inspector_id', $inspectorId)
+                ->pluck('operativo_id');
+
+            if ($operativoIds->isNotEmpty()) {
+                $operativoEnCurso = Operativo::enCurso()
+                    ->whereIn('id', $operativoIds)
+                    ->first();
             }
         }
-        
+
+        if ($operativoEnCurso) {
+            $this->operativoEnCurso = $operativoEnCurso;
+            $this->esReferente = $operativoEnCurso->esInspectorReferente($inspectorId);
+        }
+
         // Buscar operativo PLANIFICADO donde el inspector es el referente
         $operativoPlanificado = Operativo::planificado()
             ->where('inspector_referente_id', $inspectorId)
             ->first();
-        
+
         if ($operativoPlanificado) {
             $this->operativoPlanificado = $operativoPlanificado;
         }

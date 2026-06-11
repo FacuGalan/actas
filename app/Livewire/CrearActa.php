@@ -87,8 +87,9 @@ class CrearActa extends Component
                 return redirect()->route('actas.dashboard');
             }
             
-            // Verificar que el inspector está asignado
-            if (!$this->operativo->tieneInspector(auth('inspector')->id())) {
+            // Verificar que el inspector está asignado o es el referente
+            $inspectorId = auth('inspector')->id();
+            if (!$this->operativo->tieneInspector($inspectorId) && !$this->operativo->esInspectorReferente($inspectorId)) {
                 session()->flash('error', 'No estás asignado a este operativo.');
                 return redirect()->route('actas.dashboard');
             }

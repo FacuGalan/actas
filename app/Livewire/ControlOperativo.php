@@ -31,14 +31,15 @@ class ControlOperativo extends Component
             return redirect()->route('actas.dashboard');
         }
         
-        // Verificar que el inspector está asignado
-        $asignado = DB::connection('munimer_mapacalor')
+        // Verificar que el inspector está asignado o es el referente
+        $inspectorId = auth('inspector')->id();
+        $estaAsignado = DB::connection('munimer_mapacalor')
             ->table('operativo_inspector')
             ->where('operativo_id', $operativo_id)
-            ->where('inspector_id', auth('inspector')->id())
+            ->where('inspector_id', $inspectorId)
             ->exists();
-        
-        if (!$asignado) {
+
+        if (!$estaAsignado && !$this->operativo->esInspectorReferente($inspectorId)) {
             session()->flash('error', 'No estás asignado a este operativo.');
             return redirect()->route('actas.dashboard');
         }
