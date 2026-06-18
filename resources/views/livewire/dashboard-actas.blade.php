@@ -122,11 +122,16 @@
                 </div>
             @endif
 
-            {{-- Operativo PLANIFICADO (solo para inspector referente) --}}
+            {{-- Operativo PLANIFICADO (para referente e inspectores asignados) --}}
             @if($operativoPlanificado)
                 <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                    <div class="bg-blue-50 px-5 py-3 border-b border-blue-200">
+                    <div class="bg-blue-50 px-5 py-3 border-b border-blue-200 flex items-center justify-between">
                         <span class="text-sm font-semibold text-blue-900">OPERATIVO PLANIFICADO</span>
+                        @if($esReferentePlanificado)
+                            <span class="text-xs bg-[#74C4D4] text-white font-bold tracking-wide px-2 py-1 rounded shadow-sm">
+                                REFERENTE
+                            </span>
+                        @endif
                     </div>
                     <div class="p-5">
                         <div class="flex items-start gap-3 mb-4">
@@ -145,12 +150,14 @@
                             </div>
                         </div>
                         
-                        <button 
-                            wire:click="abrirModalInicio({{ $operativoPlanificado->id }})"
-                            class="w-full px-4 py-3 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition-colors shadow-md"
-                        >
-                            Iniciar Operativo
-                        </button>
+                        @if($esReferentePlanificado)
+                            <button
+                                wire:click="abrirModalInicio({{ $operativoPlanificado->id }})"
+                                class="w-full px-4 py-3 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition-colors shadow-md"
+                            >
+                                Iniciar Operativo
+                            </button>
+                        @endif
                     </div>
                 </div>
             @endif

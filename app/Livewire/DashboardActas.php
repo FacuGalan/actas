@@ -12,6 +12,7 @@ class DashboardActas extends Component
     public $operativoEnCurso = null;
     public $operativoPlanificado = null;
     public $esReferente = false;
+    public $esReferentePlanificado = false;
     
     // Modal de inicio de operativo
     public $mostrarModalInicio = false;
@@ -56,6 +57,24 @@ class DashboardActas extends Component
 
         if ($operativoPlanificado) {
             $this->operativoPlanificado = $operativoPlanificado;
+            $this->esReferentePlanificado = true;
+        } else {
+            // Si no es referente, buscar si está asignado a algún operativo planificado
+            $operativoIdsPlanificados = DB::connection('munimer_mapacalor')
+                ->table('operativo_inspector')
+                ->where('inspector_id', $inspectorId)
+                ->pluck('operativo_id');
+
+            if ($operativoIdsPlanificados->isNotEmpty()) {
+                $operativoPlanificado = Operativo::planificado()
+                    ->whereIn('id', $operativoIdsPlanificados)
+                    ->first();
+
+                if ($operativoPlanificado) {
+                    $this->operativoPlanificado = $operativoPlanificado;
+                    $this->esReferentePlanificado = false;
+                }
+            }
         }
     }
 
