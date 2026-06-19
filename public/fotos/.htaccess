@@ -1,0 +1,15 @@
+# Impedir la ejecucion de scripts en este directorio
+Options -Indexes -ExecCGI
+
+<FilesMatch "\.(?i:php\d*|phtml|pl|py|jsp|asp|sh|cgi|exe|bat|cmd)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order Deny,Allow
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# Forzar que .php sea tratado como texto plano (segunda linea de defensa)
+AddType text/plain .php .php3 .php4 .php5 .php7 .phtml

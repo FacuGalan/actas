@@ -228,18 +228,25 @@ class EditarActa extends Component
         if (!$foto) {
             return null;
         }
-        
+
         $actaNroFormateado = str_pad($this->actanro, 10, '0', STR_PAD_LEFT);
         $numeroFotoFormateado = str_pad($numeroFoto, 3, '0', STR_PAD_LEFT);
         $nombreArchivo = 'fot-' . $actaNroFormateado . '-' . $numeroFotoFormateado . '.jpg';
-        
-        $tempPath = $foto->getRealPath();
         $destinationPath = public_path('fotos/' . $nombreArchivo);
-        
-        if (!copy($tempPath, $destinationPath)) {
-            throw new \Exception("No se pudo guardar la foto {$numeroFoto}");
+
+        $imagen = @imagecreatefromjpeg($foto->getRealPath());
+
+        if ($imagen === false) {
+            throw new \Exception("No se pudo procesar la foto {$numeroFoto}. Verificá que sea un archivo JPEG válido.");
         }
-        
+
+        $guardado = imagejpeg($imagen, $destinationPath, 85);
+        imagedestroy($imagen);
+
+        if (!$guardado) {
+            throw new \Exception("No se pudo guardar la foto {$numeroFoto} en el servidor.");
+        }
+
         return $nombreArchivo;
     }
 

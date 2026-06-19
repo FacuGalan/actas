@@ -370,29 +370,27 @@ class CrearActa extends Component
 
             if ($this->foto1) {
                 $foto1Name = 'fot-' . $actaNroFormateado . '-001.jpg';
-
-                $this->foto1->storeAs('', $foto1Name, 'fotos');
+                $this->guardarImagenSegura($this->foto1, public_path('fotos/' . $foto1Name));
             }
-
 
             if ($this->foto2) {
                 $foto2Name = 'fot-' . $actaNroFormateado . '-002.jpg';
-                $this->foto2->storeAs('', $foto2Name, 'fotos');
+                $this->guardarImagenSegura($this->foto2, public_path('fotos/' . $foto2Name));
             }
 
             if ($this->foto3) {
                 $foto3Name = 'fot-' . $actaNroFormateado . '-003.jpg';
-                $this->foto3->storeAs('', $foto3Name, 'fotos');
+                $this->guardarImagenSegura($this->foto3, public_path('fotos/' . $foto3Name));
             }
 
             if ($this->foto4) {
                 $foto4Name = 'fot-' . $actaNroFormateado . '-004.jpg';
-                $this->foto4->storeAs('', $foto4Name, 'fotos');
+                $this->guardarImagenSegura($this->foto4, public_path('fotos/' . $foto4Name));
             }
 
             if ($this->foto5) {
                 $foto5Name = 'fot-' . $actaNroFormateado . '-005.jpg';
-                $this->foto5->storeAs('', $foto5Name, 'fotos');
+                $this->guardarImagenSegura($this->foto5, public_path('fotos/' . $foto5Name));
             }
 
             // Crear el acta
@@ -467,6 +465,22 @@ class CrearActa extends Component
             
             session()->flash('error', 'Error al crear el acta: ' . $e->getMessage());
             $this->dispatch('scroll-to-top');
+        }
+    }
+
+    private function guardarImagenSegura($foto, string $rutaDestino): void
+    {
+        $imagen = @imagecreatefromjpeg($foto->getRealPath());
+
+        if ($imagen === false) {
+            throw new \Exception('No se pudo procesar la imagen. Verificá que sea un archivo JPEG válido.');
+        }
+
+        $guardado = imagejpeg($imagen, $rutaDestino, 85);
+        imagedestroy($imagen);
+
+        if (!$guardado) {
+            throw new \Exception('No se pudo guardar la imagen en el servidor.');
         }
     }
 
