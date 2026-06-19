@@ -1,6 +1,6 @@
 <div class="min-h-screen bg-gray-50">
     {{-- Encabezado Principal --}}
-    <div 
+    <div
         class="bg-gradient-to-br from-[#5FB7C8] via-[#74C4D4] to-[#5FB7C8] shadow-md">
         <div class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center">
@@ -10,16 +10,16 @@
                     </h1>
 
                     <p class="text-white/90 text-sm mt-1">
-                        {{ auth('inspector')->user()->nombre }} 
-                        {{ auth('inspector')->user()->apellido }} 
+                        {{ auth('inspector')->user()->nombre }}
+                        {{ auth('inspector')->user()->apellido }}
                         - DNI: {{ auth('inspector')->user()->dni }}
                     </p>
                 </div>
 
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
-                    <button 
-                        type="submit" 
+                    <button
+                        type="submit"
                         class="text-white/90 hover:text-white text-sm font-medium transition-colors">
                         Cerrar Sesión
                     </button>
@@ -31,7 +31,7 @@
 
     {{-- Contenido Principal --}}
     <div class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
-        
+
         {{-- Mensaje de éxito --}}
         @if (session()->has('message'))
             <div class="mb-4 bg-green-50 border-l-4 border-green-500 p-4 rounded">
@@ -41,9 +41,9 @@
 
         {{-- Botones de Acción - Ahora todos en columna --}}
         <div class="space-y-4 mb-6">
-            
+
             {{-- Botón: Crear Acta Simple --}}
-            <a 
+            <a
                 href="{{ route('actas.crear-simple') }}"
                 class="group bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden border border-gray-200 block"
             >
@@ -65,8 +65,8 @@
                 </div>
             </a>
 
-           {{-- Botón Operativo EN CURSO (para inspectores asignados y referente) --}}
-            @if($operativoEnCurso)
+            {{-- Operativos EN CURSO (uno por cada operativo, puede ser más de uno para referente) --}}
+            @foreach($operativosEnCurso as $opEnCurso)
                 <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                     <div class="bg-emerald-50 px-5 py-3 border-b border-emerald-200 flex items-center justify-between">
                         <div class="flex items-center gap-2">
@@ -76,14 +76,14 @@
                             </span>
                             <span class="text-sm font-semibold text-emerald-900">OPERATIVO EN CURSO</span>
                         </div>
-                        @if($esReferente)
+                        @if($opEnCurso['es_referente'])
                             <span class="text-xs bg-[#74C4D4] text-white font-bold tracking-wide px-2 py-1 rounded shadow-sm">
                                 REFERENTE
                             </span>
                         @endif
                     </div>
-                    
-                    <a href="{{ route('actas.crear-operativo', $operativoEnCurso->id) }}" class="block p-5 hover:bg-gray-50 transition-colors">
+
+                    <a href="{{ route('actas.crear-operativo', $opEnCurso['id']) }}" class="block p-5 hover:bg-gray-50 transition-colors">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-3">
                                 <div class="flex-shrink-0 bg-emerald-100 p-3 rounded-lg">
@@ -92,10 +92,10 @@
                                     </svg>
                                 </div>
                                 <div>
-                                    <h3 class="text-base font-semibold text-gray-900">{{ $operativoEnCurso->descripcion }}</h3>
-                                    <p class="text-sm text-gray-600">{{ $operativoEnCurso->lugar }}</p>
+                                    <h3 class="text-base font-semibold text-gray-900">{{ $opEnCurso['descripcion'] }}</h3>
+                                    <p class="text-sm text-gray-600">{{ $opEnCurso['lugar'] }}</p>
                                     <p class="text-xs text-gray-500 mt-1">
-                                        Iniciado: {{ $operativoEnCurso->hora_apertura_real }}
+                                        Iniciado: {{ $opEnCurso['hora_apertura_real'] }}
                                     </p>
                                 </div>
                             </div>
@@ -104,12 +104,12 @@
                             </svg>
                         </div>
                     </a>
-                    
+
                     {{-- Botón finalizar (solo para inspector referente) --}}
-                    @if($esReferente)
+                    @if($opEnCurso['es_referente'])
                     <div class="px-5 pb-4 border-t border-gray-200 pt-4">
-                        <button 
-                            onclick="confirmarFinalizacionOperativo({{ $operativoEnCurso->id }}, '{{ $operativoEnCurso->descripcion }}')"
+                        <button
+                            onclick="confirmarFinalizacionOperativo({{ $opEnCurso['id'] }}, '{{ addslashes($opEnCurso['descripcion']) }}')"
                             class="w-full px-4 py-2.5 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition-colors flex items-center justify-center gap-2"
                         >
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -120,14 +120,14 @@
                     </div>
                     @endif
                 </div>
-            @endif
+            @endforeach
 
-            {{-- Operativo PLANIFICADO (para referente e inspectores asignados) --}}
-            @if($operativoPlanificado)
+            {{-- Operativos PLANIFICADOS (uno por cada operativo) --}}
+            @foreach($operativosPlanificados as $opPlanificado)
                 <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                     <div class="bg-blue-50 px-5 py-3 border-b border-blue-200 flex items-center justify-between">
                         <span class="text-sm font-semibold text-blue-900">OPERATIVO PLANIFICADO</span>
-                        @if($esReferentePlanificado)
+                        @if($opPlanificado['es_referente'])
                             <span class="text-xs bg-[#74C4D4] text-white font-bold tracking-wide px-2 py-1 rounded shadow-sm">
                                 REFERENTE
                             </span>
@@ -141,18 +141,18 @@
                                 </svg>
                             </div>
                             <div class="flex-1">
-                                <h3 class="text-base font-semibold text-gray-900">{{ $operativoPlanificado->descripcion }}</h3>
-                                <p class="text-sm text-gray-600">{{ $operativoPlanificado->lugar }}</p>
+                                <h3 class="text-base font-semibold text-gray-900">{{ $opPlanificado['descripcion'] }}</h3>
+                                <p class="text-sm text-gray-600">{{ $opPlanificado['lugar'] }}</p>
                                 <p class="text-xs text-gray-500 mt-1">
-                                    Fecha: {{ $operativoPlanificado->fecha->format('d/m/Y') }} | 
-                                    Horario: {{ $operativoPlanificado->hora_desde }} - {{ $operativoPlanificado->hora_hasta }}
+                                    Fecha: {{ $opPlanificado['fecha'] }} |
+                                    Horario: {{ $opPlanificado['hora_desde'] }} - {{ $opPlanificado['hora_hasta'] }}
                                 </p>
                             </div>
                         </div>
-                        
-                        @if($esReferentePlanificado)
+
+                        @if($opPlanificado['es_referente'])
                             <button
-                                wire:click="abrirModalInicio({{ $operativoPlanificado->id }})"
+                                wire:click="abrirModalInicio({{ $opPlanificado['id'] }})"
                                 class="w-full px-4 py-3 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition-colors shadow-md"
                             >
                                 Iniciar Operativo
@@ -160,7 +160,7 @@
                         @endif
                     </div>
                 </div>
-            @endif
+            @endforeach
 
             {{-- Botón Ver Mis Actas --}}
             <div class="bg-white rounded-lg shadow-sm border border-gray-200">
@@ -190,7 +190,7 @@
     @if($mostrarModalInicio)
         <div class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" wire:click="cerrarModalInicio">
             <div class="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-hidden" wire:click.stop>
-                
+
                 {{-- Header --}}
                 <div class="px-6 py-4 border-b border-gray-200 bg-emerald-50">
                     <div class="flex justify-between items-center">
@@ -205,10 +205,10 @@
                         <p class="text-sm text-emerald-700 mt-1">{{ $operativoIniciar->descripcion }}</p>
                     @endif
                 </div>
-                
+
                 {{-- Contenido --}}
                 <div class="overflow-y-auto p-6" style="max-height: calc(90vh - 180px)">
-                    
+
                     {{-- Mensaje de error --}}
                     @if (session()->has('error'))
                         <div class="mb-4 bg-red-50 border-l-4 border-red-500 p-3 rounded">
@@ -217,7 +217,7 @@
                     @endif
 
                     <h4 class="text-sm font-semibold text-gray-900 mb-3">Inspectores Asignados</h4>
-                    
+
                     {{-- Lista de Inspectores --}}
                     <div class="space-y-3 mb-6">
                         @foreach($inspectoresAsignados as $index => $inspector)
@@ -228,13 +228,13 @@
                                         <p class="text-xs text-gray-600">DNI: {{ $inspector['dni'] }}</p>
                                     </div>
                                     <div class="flex gap-2">
-                                        <button 
+                                        <button
                                             wire:click="actualizarEstadoInspector({{ $index }}, 'presente')"
                                             class="px-3 py-1.5 text-xs font-medium rounded-md transition-colors {{ $inspector['estado'] === 'presente' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}"
                                         >
                                             Presente
                                         </button>
-                                        <button 
+                                        <button
                                             wire:click="actualizarEstadoInspector({{ $index }}, 'ausente')"
                                             class="px-3 py-1.5 text-xs font-medium rounded-md transition-colors {{ $inspector['estado'] === 'ausente' ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}"
                                         >
@@ -242,11 +242,11 @@
                                         </button>
                                     </div>
                                 </div>
-                                
+
                                 @if($inspector['estado'] === 'ausente')
                                     <div class="mt-2">
-                                        <input 
-                                            type="text" 
+                                        <input
+                                            type="text"
                                             wire:model="inspectoresAsignados.{{ $index }}.observacion"
                                             class="w-full px-3 py-2 text-sm border border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
                                             placeholder="Motivo de la ausencia (requerido)"
@@ -260,7 +260,7 @@
                     {{-- Acompañamiento Policial --}}
                     <div class="border-t pt-4">
                         <label class="block text-sm font-semibold text-gray-900 mb-2">Acompañamiento Policial</label>
-                        <textarea 
+                        <textarea
                             wire:model="acompanamiento_policial"
                             rows="3"
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm uppercase"
@@ -268,16 +268,16 @@
                         ></textarea>
                     </div>
                 </div>
-                
+
                 {{-- Footer --}}
                 <div class="px-6 py-4 border-t border-gray-200 bg-gray-50 flex gap-3">
-                    <button 
+                    <button
                         wire:click="cerrarModalInicio"
                         class="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition-colors"
                     >
                         Cancelar
                     </button>
-                    <button 
+                    <button
                         wire:click="confirmarInicioOperativo"
                         class="flex-1 px-4 py-2 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition-colors"
                     >

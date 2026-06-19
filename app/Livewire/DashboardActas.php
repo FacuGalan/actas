@@ -9,11 +9,9 @@ use Illuminate\Support\Facades\DB;
 
 class DashboardActas extends Component
 {
-    public $operativoEnCurso = null;
-    public $operativoPlanificado = null;
-    public $esReferente = false;
-    public $esReferentePlanificado = false;
-    
+    public $operativosEnCurso = [];
+    public $operativosPlanificados = [];
+
     // Modal de inicio de operativo
     public $mostrarModalInicio = false;
     public $operativoIniciar = null;
@@ -26,89 +24,115 @@ class DashboardActas extends Component
     {
         $inspectorId = auth('inspector')->id();
 
-        // Buscar operativo EN CURSO donde el inspector es referente
-        $operativoEnCurso = Operativo::enCurso()
+        // IDs de todos los operativos donde el inspector está en la tabla pivot
+        $operativoIdsAsignados = DB::connection('munimer_mapacalor')
+            ->table('operativo_inspector')
+            ->where('inspector_id', $inspectorId)
+            ->pluck('operativo_id');
+
+        // === OPERATIVOS EN CURSO ===
+
+        $enCursoReferente = Operativo::enCurso()
             ->where('inspector_referente_id', $inspectorId)
-            ->first();
+            ->get();
 
-        // Si no es referente, buscar si está asignado a algún operativo en curso
-        if (!$operativoEnCurso) {
-            $operativoIds = DB::connection('munimer_mapacalor')
-                ->table('operativo_inspector')
-                ->where('inspector_id', $inspectorId)
-                ->pluck('operativo_id');
-
-            if ($operativoIds->isNotEmpty()) {
-                $operativoEnCurso = Operativo::enCurso()
-                    ->whereIn('id', $operativoIds)
-                    ->first();
-            }
+        $enCursoAsignado = collect();
+        if ($operativoIdsAsignados->isNotEmpty()) {
+            $idsReferente = $enCursoReferente->pluck('id');
+            $enCursoAsignado = Operativo::enCurso()
+                ->whereIn('id', $operativoIdsAsignados)
+                ->whereNotIn('id', $idsReferente)
+                ->get();
         }
 
-        if ($operativoEnCurso) {
-            $this->operativoEnCurso = $operativoEnCurso;
-            $this->esReferente = $operativoEnCurso->esInspectorReferente($inspectorId);
+        $this->operativosEnCurso = [];
+        foreach ($enCursoReferente as $op) {
+            $this->operativosEnCurso[] = [
+                'id'                 => $op->id,
+                'descripcion'        => $op->descripcion,
+                'lugar'              => $op->lugar,
+                'hora_apertura_real' => $op->hora_apertura_real,
+                'es_referente'       => true,
+            ];
+        }
+        foreach ($enCursoAsignado as $op) {
+            $this->operativosEnCurso[] = [
+                'id'                 => $op->id,
+                'descripcion'        => $op->descripcion,
+                'lugar'              => $op->lugar,
+                'hora_apertura_real' => $op->hora_apertura_real,
+                'es_referente'       => false,
+            ];
         }
 
-        // Buscar operativo PLANIFICADO donde el inspector es el referente
-        $operativoPlanificado = Operativo::planificado()
+        // === OPERATIVOS PLANIFICADOS ===
+
+        $planificadosReferente = Operativo::planificado()
             ->where('inspector_referente_id', $inspectorId)
-            ->first();
+            ->get();
 
-        if ($operativoPlanificado) {
-            $this->operativoPlanificado = $operativoPlanificado;
-            $this->esReferentePlanificado = true;
-        } else {
-            // Si no es referente, buscar si está asignado a algún operativo planificado
-            $operativoIdsPlanificados = DB::connection('munimer_mapacalor')
-                ->table('operativo_inspector')
-                ->where('inspector_id', $inspectorId)
-                ->pluck('operativo_id');
+        $planificadosAsignado = collect();
+        if ($operativoIdsAsignados->isNotEmpty()) {
+            $idsReferente = $planificadosReferente->pluck('id');
+            $planificadosAsignado = Operativo::planificado()
+                ->whereIn('id', $operativoIdsAsignados)
+                ->whereNotIn('id', $idsReferente)
+                ->get();
+        }
 
-            if ($operativoIdsPlanificados->isNotEmpty()) {
-                $operativoPlanificado = Operativo::planificado()
-                    ->whereIn('id', $operativoIdsPlanificados)
-                    ->first();
-
-                if ($operativoPlanificado) {
-                    $this->operativoPlanificado = $operativoPlanificado;
-                    $this->esReferentePlanificado = false;
-                }
-            }
+        $this->operativosPlanificados = [];
+        foreach ($planificadosReferente as $op) {
+            $this->operativosPlanificados[] = [
+                'id'          => $op->id,
+                'descripcion' => $op->descripcion,
+                'lugar'       => $op->lugar,
+                'fecha'       => $op->fecha->format('d/m/Y'),
+                'hora_desde'  => $op->hora_desde,
+                'hora_hasta'  => $op->hora_hasta,
+                'es_referente' => true,
+            ];
+        }
+        foreach ($planificadosAsignado as $op) {
+            $this->operativosPlanificados[] = [
+                'id'          => $op->id,
+                'descripcion' => $op->descripcion,
+                'lugar'       => $op->lugar,
+                'fecha'       => $op->fecha->format('d/m/Y'),
+                'hora_desde'  => $op->hora_desde,
+                'hora_hasta'  => $op->hora_hasta,
+                'es_referente' => false,
+            ];
         }
     }
 
     public function abrirModalInicio($operativoId)
     {
         $this->operativoIniciar = Operativo::find($operativoId);
-        
+
         if (!$this->operativoIniciar || !$this->operativoIniciar->esInspectorReferente(auth('inspector')->id())) {
             session()->flash('error', 'No tenés permisos para iniciar este operativo.');
             return;
         }
-        
-        // Cargar inspectores asignados
+
         $asignaciones = DB::connection('munimer_mapacalor')
             ->table('operativo_inspector')
             ->where('operativo_id', $operativoId)
             ->get();
-        
+
         $this->inspectoresAsignados = [];
-        
         foreach ($asignaciones as $asignacion) {
             $inspector = Inspector::find($asignacion->inspector_id);
-            
             if ($inspector) {
                 $this->inspectoresAsignados[] = [
-                    'id' => $inspector->id,
-                    'nombre' => $inspector->nombre . ' ' . $inspector->apellido,
-                    'dni' => $inspector->dni,
-                    'estado' => 'presente',
+                    'id'          => $inspector->id,
+                    'nombre'      => $inspector->nombre . ' ' . $inspector->apellido,
+                    'dni'         => $inspector->dni,
+                    'estado'      => 'presente',
                     'observacion' => '',
                 ];
             }
         }
-        
+
         $this->mostrarModalInicio = true;
     }
 
@@ -116,8 +140,6 @@ class DashboardActas extends Component
     {
         if (isset($this->inspectoresAsignados[$index])) {
             $this->inspectoresAsignados[$index]['estado'] = $estado;
-            
-            // Limpiar observación si vuelve a presente
             if ($estado === 'presente') {
                 $this->inspectoresAsignados[$index]['observacion'] = '';
             }
@@ -126,35 +148,30 @@ class DashboardActas extends Component
 
     public function confirmarInicioOperativo()
     {
-        // Validar que los ausentes tengan observación
         foreach ($this->inspectoresAsignados as $inspector) {
             if ($inspector['estado'] === 'ausente' && empty($inspector['observacion'])) {
                 session()->flash('error', 'Completá la observación para los inspectores ausentes.');
                 return;
             }
         }
-        
-        // Actualizar estados en operativo_inspector
+
         foreach ($this->inspectoresAsignados as $inspector) {
             DB::connection('munimer_mapacalor')
                 ->table('operativo_inspector')
                 ->where('operativo_id', $this->operativoIniciar->id)
                 ->where('inspector_id', $inspector['id'])
                 ->update([
-                    'estado' => $inspector['estado'],
+                    'estado'      => $inspector['estado'],
                     'observacion' => $inspector['observacion'] ?: null,
                 ]);
         }
-        
-        // Actualizar acompañamiento policial
+
         $this->operativoIniciar->acompanamiento_policial = $this->acompanamiento_policial ?: null;
-        
-        // Iniciar el operativo
         $this->operativoIniciar->iniciar();
-        
+
         $this->mostrarModalInicio = false;
         session()->flash('message', 'Operativo iniciado exitosamente.');
-        
+
         return redirect()->route('actas.dashboard');
     }
 
@@ -167,7 +184,7 @@ class DashboardActas extends Component
     public function confirmarFinalizacion($operativoId)
     {
         $operativo = Operativo::find($operativoId);
-        
+
         if ($operativo && $operativo->esInspectorReferente(auth('inspector')->id())) {
             $operativo->finalizar();
             session()->flash('message', 'Operativo finalizado exitosamente.');
