@@ -266,11 +266,11 @@ class CrearActa extends Component
         'brenavese' => 'nullable|max:50',
 
         // Fotos
-        'foto1' => 'nullable|image|mimes:jpeg,jpg|max:5120',
-        'foto2' => 'nullable|image|mimes:jpeg,jpg|max:5120',
-        'foto3' => 'nullable|image|mimes:jpeg,jpg|max:5120',
-        'foto4' => 'nullable|image|mimes:jpeg,jpg|max:5120',
-        'foto5' => 'nullable|image|mimes:jpeg,jpg|max:5120',
+        'foto1' => 'nullable|image|mimes:jpeg,jpg|max:2048',
+        'foto2' => 'nullable|image|mimes:jpeg,jpg|max:2048',
+        'foto3' => 'nullable|image|mimes:jpeg,jpg|max:2048',
+        'foto4' => 'nullable|image|mimes:jpeg,jpg|max:2048',
+        'foto5' => 'nullable|image|mimes:jpeg,jpg|max:2048',
     ], [
         'actanro.required'      => 'El número de acta es obligatorio',
         'actanro.integer'       => 'El número de acta debe ser un número entero',
