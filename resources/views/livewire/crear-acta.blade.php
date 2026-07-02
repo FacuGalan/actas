@@ -497,7 +497,7 @@
 
                 <div id="seccion-imagenes" class="border-t p-3 space-y-3 hidden" wire:ignore.self>
                     <p class="text-xs text-gray-600 mb-3">
-                        Podés adjuntar hasta 5 fotografías del acta (formato JPG/JPEG, máx. 5MB cada una)
+                        Podés adjuntar hasta 5 fotografías del acta (formato JPG/JPEG, máx. 2MB cada una)
                     </p>
 
                     {{-- Foto 1 --}}
