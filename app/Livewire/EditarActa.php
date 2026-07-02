@@ -65,6 +65,9 @@ class EditarActa extends Component
     public $foto4;
     public $foto5;
 
+    // Tamaño máximo permitido para las fotos, en bytes (debe coincidir con la regla 'max' de la validación, en KB)
+    private const FOTO_MAX_BYTES = 2048 * 1024;
+
     public function mount($acta)
     {
         $this->actaId = $acta;
@@ -223,6 +226,53 @@ class EditarActa extends Component
         }
     }
 
+    public function updatedFoto1() { $this->comprimirFotoSiEsNecesario($this->foto1); }
+    public function updatedFoto2() { $this->comprimirFotoSiEsNecesario($this->foto2); }
+    public function updatedFoto3() { $this->comprimirFotoSiEsNecesario($this->foto3); }
+    public function updatedFoto4() { $this->comprimirFotoSiEsNecesario($this->foto4); }
+    public function updatedFoto5() { $this->comprimirFotoSiEsNecesario($this->foto5); }
+
+    /**
+     * Las fotos de celular suelen pesar más que el límite de 2MB. En vez de rechazarlas,
+     * las redimensionamos y recomprimimos apenas se suben para que entren en el límite,
+     * así el inspector no tiene que editar la foto a mano antes de subirla.
+     */
+    private function comprimirFotoSiEsNecesario($foto): void
+    {
+        if (!$foto || !$foto->isValid() || $foto->getSize() <= self::FOTO_MAX_BYTES) {
+            return;
+        }
+
+        $rutaTemporal = $foto->getRealPath();
+        $imagen = @imagecreatefromstring(file_get_contents($rutaTemporal));
+
+        if ($imagen === false) {
+            return; // No es una imagen procesable; la validación posterior la va a rechazar con un mensaje claro.
+        }
+
+        $anchoMax = 1920;
+        $ancho = imagesx($imagen);
+        $alto = imagesy($imagen);
+
+        if ($ancho > $anchoMax) {
+            $nuevoAlto = (int) round($alto * ($anchoMax / $ancho));
+            $redimensionada = imagecreatetruecolor($anchoMax, $nuevoAlto);
+            imagecopyresampled($redimensionada, $imagen, 0, 0, 0, 0, $anchoMax, $nuevoAlto, $ancho, $alto);
+            imagedestroy($imagen);
+            $imagen = $redimensionada;
+        }
+
+        // Bajamos la calidad JPEG en pasos hasta que entre en el límite de tamaño.
+        $calidad = 85;
+        do {
+            imagejpeg($imagen, $rutaTemporal, $calidad);
+            clearstatcache(true, $rutaTemporal);
+            $calidad -= 15;
+        } while (filesize($rutaTemporal) > self::FOTO_MAX_BYTES && $calidad >= 20);
+
+        imagedestroy($imagen);
+    }
+
     private function guardarFoto($foto, $numeroFoto)
     {
         if (!$foto) {
@@ -263,6 +313,28 @@ class EditarActa extends Component
             'foto3' => 'nullable|image|mimes:jpeg,jpg|max:2048',
             'foto4' => 'nullable|image|mimes:jpeg,jpg|max:2048',
             'foto5' => 'nullable|image|mimes:jpeg,jpg|max:2048',
+        ], [
+            'actanro.required'      => 'El número de acta es obligatorio',
+            'actanro.numeric'       => 'El número de acta debe ser un número',
+            'dto_id.required'       => 'El departamento es obligatorio',
+            'fecha.required'        => 'La fecha es obligatoria',
+            'hora.required'         => 'La hora es obligatoria',
+            'lugarinfra.required'   => 'La dirección de la infracción es obligatoria',
+            'foto1.image'           => 'La fotografía 1 debe ser una imagen válida',
+            'foto1.mimes'           => 'La fotografía 1 debe ser un archivo JPG o JPEG',
+            'foto1.max'             => 'La fotografía 1 no pudo comprimirse por debajo de 2MB. Probá con otra foto',
+            'foto2.image'           => 'La fotografía 2 debe ser una imagen válida',
+            'foto2.mimes'           => 'La fotografía 2 debe ser un archivo JPG o JPEG',
+            'foto2.max'             => 'La fotografía 2 no pudo comprimirse por debajo de 2MB. Probá con otra foto',
+            'foto3.image'           => 'La fotografía 3 debe ser una imagen válida',
+            'foto3.mimes'           => 'La fotografía 3 debe ser un archivo JPG o JPEG',
+            'foto3.max'             => 'La fotografía 3 no pudo comprimirse por debajo de 2MB. Probá con otra foto',
+            'foto4.image'           => 'La fotografía 4 debe ser una imagen válida',
+            'foto4.mimes'           => 'La fotografía 4 debe ser un archivo JPG o JPEG',
+            'foto4.max'             => 'La fotografía 4 no pudo comprimirse por debajo de 2MB. Probá con otra foto',
+            'foto5.image'           => 'La fotografía 5 debe ser una imagen válida',
+            'foto5.mimes'           => 'La fotografía 5 debe ser un archivo JPG o JPEG',
+            'foto5.max'             => 'La fotografía 5 no pudo comprimirse por debajo de 2MB. Probá con otra foto',
         ]);
 
         DB::beginTransaction();
