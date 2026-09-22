@@ -22,6 +22,7 @@ Aplicación web para que los inspectores carguen actas de infracción desde el c
 | `/actas/{acta}/editar` | `EditarActa` | Edición de un acta |
 
 - **Motivos**: cada acta requiere al menos un motivo de infracción (`fa_motivo`), filtrado por el departamento del inspector.
+- **Actas simples**: se guardan con `operativo_id = -1` (`Acta::OPERATIVO_ACTA_SIMPLE`) para distinguirlas de las cargadas por otros medios, que tienen `NULL`. Las actas de operativo guardan el id del operativo (`> 0`).
 - **Confirmación del vehículo**: al guardar un acta nueva se muestra un cartel con la patente y los datos del vehículo para que el inspector confirme que son correctos.
 - **Fotos**: hasta 5 por acta, en JPG. Se previsualizan al cargarlas.
 
