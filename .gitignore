@@ -2,3 +2,7 @@ vendor/
 node_modules/
 .env
 storage/*.key
+
+# Fotos de las actas (se generan en cada servidor)
+/public/fotos/*
+!/public/fotos/.htaccess
