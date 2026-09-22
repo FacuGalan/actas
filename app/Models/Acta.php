@@ -10,7 +10,11 @@ class Acta extends Model
     protected $table = 'fa_acta';
     
     public $timestamps = false;
-    
+
+    // Valor de operativo_id para las actas simples (fuera de operativo) creadas desde este sistema.
+    // Permite distinguirlas de las actas cargadas por otros medios, que tienen operativo_id NULL.
+    public const OPERATIVO_ACTA_SIMPLE = -1;
+
     protected $fillable = [
         'actanro',
         'dto_id',
@@ -62,6 +66,14 @@ class Acta extends Model
     public function inspector(): BelongsTo
     {
         return $this->belongsTo(Inspector::class, 'inspector_id');
+    }
+
+    /**
+     * Si el acta pertenece a un operativo real (las simples tienen NULL o -1)
+     */
+    public function esDeOperativo(): bool
+    {
+        return $this->operativo_id > 0;
     }
 
     /**

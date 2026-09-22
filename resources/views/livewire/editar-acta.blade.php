@@ -30,7 +30,7 @@
         <form wire:submit.prevent="actualizarActa">
             
             {{-- Info del operativo si existe --}}
-            @if($acta->operativo_id)
+            @if($acta->esDeOperativo())
             <div class="bg-emerald-50 border-l-4 border-emerald-500 p-3 rounded mb-3 text-xs">
                 <p class="font-semibold text-emerald-900">Acta de Operativo #{{ $acta->operativo_id }}</p>
             </div>

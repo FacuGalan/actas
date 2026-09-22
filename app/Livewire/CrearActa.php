@@ -431,7 +431,7 @@ class CrearActa extends Component
                 'actanro' => $this->actanro,
                 'dto_id' => $this->dto_id,
                 'inspector_id' => auth('inspector')->id(),
-                'operativo_id' => $this->esOperativo ? $this->operativoId : null,
+                'operativo_id' => $this->esOperativo ? $this->operativoId : Acta::OPERATIVO_ACTA_SIMPLE,
                 'fecha' => $this->fecha,
                 'hora' => $this->hora,
                 'lugarinfra' => $this->lugarinfra ?: null,
