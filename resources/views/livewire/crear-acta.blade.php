@@ -838,6 +838,61 @@
             Livewire.on('scroll-to-top', () => {
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             });
+
+            // Confirmación de los datos del vehículo antes de grabar el acta
+            Livewire.on('confirmar-vehiculo', (vehiculo) => {
+                const escapar = (texto) => {
+                    const div = document.createElement('div');
+                    div.textContent = texto;
+                    return div.innerHTML;
+                };
+
+                let html;
+                if (vehiculo.dominio) {
+                    const filas = [
+                        ['Patente', vehiculo.dominio],
+                        ['Tipo', vehiculo.tipo],
+                        ['Marca', vehiculo.marca],
+                        ['Modelo', vehiculo.modelo],
+                        ['Motor', vehiculo.motor],
+                        ['Chasis', vehiculo.chasis],
+                        ['Licencia', vehiculo.licencia],
+                    ].map(([etiqueta, valor]) => `
+                        <tr>
+                            <td class="py-1 pr-4 text-gray-500">${etiqueta}</td>
+                            <td class="py-1 font-semibold text-gray-900 ${etiqueta === 'Patente' ? 'text-lg tracking-wider' : ''}">${valor ? escapar(valor) : '—'}</td>
+                        </tr>`).join('');
+                    html = `<table class="mx-auto text-left text-sm">${filas}</table>`;
+                } else {
+                    html = '<p class="text-sm text-gray-700">No se cargaron datos del vehículo.<br>¿Querés guardar el acta igual?</p>';
+                }
+
+                Swal.fire({
+                    title: '¿Los datos del vehículo son correctos?',
+                    html: html,
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#5FB7C8',
+                    cancelButtonColor: '#6b7280',
+                    confirmButtonText: 'Sí, guardar',
+                    cancelButtonText: 'Corregir',
+                    reverseButtons: true,
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        @this.call('guardarActa', true);
+                    } else if (result.dismiss === Swal.DismissReason.cancel) {
+                        // Abrir la sección del vehículo para que pueda corregir
+                        const seccion = document.getElementById('seccion-vehiculo');
+                        const icono = document.getElementById('icono-seccion-vehiculo');
+                        if (seccion) {
+                            seccion.classList.remove('hidden');
+                            if (icono) icono.classList.add('rotate-180');
+                            seccionesAbiertas['seccion-vehiculo'] = true;
+                            seccion.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }
+                    }
+                });
+            });
         });
     </script>
 </div>

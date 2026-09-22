@@ -240,7 +240,7 @@ class CrearActa extends Component
         $this->motivosSeleccionados = array_values($this->motivosSeleccionados);
     }
 
-    public function guardarActa()
+    public function guardarActa(bool $vehiculoConfirmado = false)
     {
        $this->validate([
         // Encabezado
@@ -364,6 +364,21 @@ class CrearActa extends Component
             $this->dispatch('abrir-seccion', seccion: 'seccion-encabezado');
             $this->addError('actanro', 'El número de acta ya existe para este departamento.');
             $this->dispatch('scroll-to-top');
+            return;
+        }
+
+        // Antes de grabar, el inspector tiene que confirmar los datos del vehículo.
+        // La vista muestra el cartel y, si confirma, vuelve a llamar a guardarActa(true).
+        if (!$vehiculoConfirmado) {
+            $this->dispatch('confirmar-vehiculo',
+                dominio: $this->dominio ?: '',
+                tipo: $this->tipo_id ? (DB::table('fa_tiporodado')->where('id', $this->tipo_id)->value('nombre') ?? '') : '',
+                marca: $this->marca_id ? (DB::table('fa_marca')->where('id', $this->marca_id)->value('nombre') ?? '') : '',
+                modelo: $this->modelo ?: '',
+                motor: $this->motor ?: '',
+                chasis: $this->chasis ?: '',
+                licencia: $this->licencia ?: '',
+            );
             return;
         }
 
