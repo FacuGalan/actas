@@ -1,59 +1,63 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Sistema de Actas
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Aplicación web para que los inspectores carguen actas de infracción desde el celular, tanto actas simples como actas dentro de un operativo de control.
 
-## About Laravel
+## Stack
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- PHP 8.2 · Laravel 12
+- Livewire 3 (componentes en `app/Livewire`) · Tailwind CSS · Vite
+- MySQL (base `munimer_faltas`)
+- SweetAlert2 (CDN) para confirmaciones y avisos
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Funcionalidades
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+| Ruta | Componente | Descripción |
+|---|---|---|
+| `/login` | `AuthenticatedSessionController` | Ingreso con DNI y contraseña del inspector |
+| `/actas` | `DashboardActas` | Panel principal |
+| `/actas/crear-simple` | `CrearActa` | Acta simple, sin operativo |
+| `/actas/operativo/{id}` | `ControlOperativo` | Registro de controles dentro de un operativo |
+| `/actas/operativo/{id}/acta` | `CrearActa` | Acta dentro de un operativo |
+| `/actas/listar` | `ListarActas` | Actas del inspector |
+| `/actas/{acta}/editar` | `EditarActa` | Edición de un acta |
 
-## Learning Laravel
+- **Motivos**: cada acta requiere al menos un motivo de infracción (`fa_motivo`), filtrado por el departamento del inspector.
+- **Confirmación del vehículo**: al guardar un acta nueva se muestra un cartel con la patente y los datos del vehículo para que el inspector confirme que son correctos.
+- **Fotos**: hasta 5 por acta, en JPG. Se previsualizan al cargarlas.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+### Fotos
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+- En el navegador (`resources/js/comprimir-fotos.js`) se achican a 1920px de lado mayor, se recomprimen a JPEG y se corrige la rotación EXIF antes de subirlas. Se activa con el atributo `data-comprimir-foto` en el `<input type="file">`.
+- En el servidor, si igual llegan con más de 2MB, se vuelven a comprimir (`comprimirFotoSiEsNecesario`) y al guardar se re-generan con GD.
+- Se guardan en `public/fotos/` como `fot-{nº de acta con 10 dígitos}-{nº de foto con 3 dígitos}.jpg` (ej.: `fot-0000005557-002.jpg`).
+- `public/fotos/` está en `.gitignore` salvo su `.htaccess`, que impide ejecutar scripts en esa carpeta y **tiene que estar en cada servidor**.
 
-## Laravel Sponsors
+## Autenticación
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+No se usa la tabla `users`. El login es con el guard `inspector`, sobre la tabla `fa_inspector` (DNI + contraseña). No hay registro público: los inspectores se dan de alta directamente en la base.
 
-### Premium Partners
+> ⚠️ Las contraseñas de `fa_inspector` se guardan y comparan en texto plano. Está pendiente migrar a hash.
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+## Base de datos
 
-## Contributing
+La mayoría de las tablas son preexistentes y **no se crean con migraciones**: `fa_acta`, `fa_acta_motivo`, `fa_inspector`, `fa_motivo`, `fa_persona`, `fa_departamento`, `fa_marca`, `fa_tiporodado` y `operativos`. Para desarrollo hace falta una copia de la base `munimer_faltas`.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Las migraciones del repo solo crean las tablas de Laravel (`users`, `cache`, `jobs`) y `fa_registro_control`.
 
-## Code of Conduct
+## Instalación
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```bash
+composer install
+cp .env.example .env        # configurar DB_CONNECTION=mysql y los datos de munimer_faltas
+php artisan key:generate
+php artisan migrate
+npm install
+npm run build
+```
 
-## Security Vulnerabilities
+En Apache, `public/.htaccess` sube los límites de PHP (`upload_max_filesize 10M`, `post_max_size 12M`) para la subida de fotos.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## Desarrollo
 
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+- `npm run dev` para trabajar con Vite en caliente.
+- **`public/build` está versionado**: después de cambiar JS o CSS (o clases de Tailwind en las vistas), correr `npm run build` y commitear los archivos generados junto con el cambio.
