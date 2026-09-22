@@ -59,7 +59,7 @@
                     </svg>
                 </button>
 
-                <div id="seccion-motivos" class="hidden border-t">
+                <div id="seccion-motivos" class="hidden border-t" wire:ignore.self>
                     <div class="p-3">
                         <button 
                             type="button" 
@@ -212,7 +212,7 @@
                     </svg>
                 </button>
 
-                <div id="seccion-medida" class="hidden border-t p-3">
+                <div id="seccion-medida" class="hidden border-t p-3" wire:ignore.self>
                     <div class="grid grid-cols-2 gap-2">
                         <label class="flex items-center justify-center p-3 bg-gray-50 rounded-lg cursor-pointer border border-gray-200 hover:bg-amber-50 hover:border-amber-300 transition-colors">
                             <input type="checkbox" wire:model="decomiso" class="rounded border-gray-300 text-amber-600 w-4 h-4">
@@ -252,7 +252,7 @@
                     </svg>
                 </button>
 
-                <div id="seccion-vehiculo" class="hidden border-t p-3 space-y-3">
+                <div id="seccion-vehiculo" class="hidden border-t p-3 space-y-3" wire:ignore.self>
                     <div>
                         <label class="block text-xs font-medium text-gray-700 mb-1">Dominio</label>
                         <input 
@@ -336,7 +336,7 @@
                     </svg>
                 </button>
 
-                <div id="seccion-infractor" class="hidden border-t p-3 space-y-3">
+                <div id="seccion-infractor" class="hidden border-t p-3 space-y-3" wire:ignore.self>
                     <div class="grid grid-cols-3 gap-2">
                         <div>
                             <label class="block text-xs font-medium text-gray-700 mb-1">DNI</label>
@@ -427,7 +427,7 @@
                     </svg>
                 </button>
 
-                <div id="seccion-imagenes" class="border-t p-3 space-y-3 hidden">
+                <div id="seccion-imagenes" class="border-t p-3 space-y-3 hidden" wire:ignore.self>
                     <p class="text-xs text-gray-600 mb-3">
                         Podés adjuntar hasta 5 fotografías del acta (formato JPG/JPEG)
                     </p>
