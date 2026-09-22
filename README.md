@@ -62,3 +62,22 @@ En Apache, `public/.htaccess` sube los límites de PHP (`upload_max_filesize 10M
 
 - `npm run dev` para trabajar con Vite en caliente.
 - **`public/build` está versionado**: después de cambiar JS o CSS (o clases de Tailwind en las vistas), correr `npm run build` y commitear los archivos generados junto con el cambio.
+
+## Deploy
+
+Hay un servidor de prueba y uno oficial. Probar primero en el de prueba. En cada servidor, desde la carpeta del proyecto:
+
+```bash
+git status                  # revisar que no haya cambios locales inesperados
+git pull origin master
+php artisan optimize:clear
+```
+
+- **No correr `npm run build` en los servidores**: el build viene commiteado. Si alguien lo corrió, `public/build` aparece modificado y el `pull` se frena; se resuelve con `git checkout -- public/build` y borrando el `.css` suelto que quede como untracked en `public/build/assets/`.
+- `public/storage` es un enlace simbólico versionado que en el repo apunta a `/var/www/actas/storage/app/public`. En los servidores donde el proyecto está en otra ruta aparece como modificado porque se corrigió a mano: **no restaurarlo** (no usar `git checkout -- .` ni `git restore .`).
+- Solo hace falta `composer install` o `php artisan migrate` si el cambio lo requiere (dependencias o migraciones nuevas).
+
+## Pendientes
+
+- Guardar las contraseñas de `fa_inspector` con hash (confirmar antes si otro sistema usa esa tabla).
+- Sacar `public/storage` del repo y crearlo en cada servidor con `php artisan storage:link`.
