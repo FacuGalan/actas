@@ -218,11 +218,13 @@ class EditarActa extends Component
             // Actualizar la propiedad correspondiente
             $this->{"fotoExistente{$numeroFoto}"} = null;
             
-            $this->dispatch('mostrar-alerta', [
-                'tipo' => 'success',
-                'titulo' => '¡Eliminada!',
-                'mensaje' => "La fotografía {$numeroFoto} fue eliminada exitosamente."
-            ]);
+            // Parámetros con nombre: en Livewire 3 un array posicional llega al JS envuelto en una lista
+            // y el listener no encuentra tipo/titulo/mensaje.
+            $this->dispatch('mostrar-alerta',
+                tipo: 'success',
+                titulo: 'Foto eliminada correctamente',
+                mensaje: '',
+            );
         }
     }
 
